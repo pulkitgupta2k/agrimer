@@ -25,17 +25,18 @@ def get_product_type(link):
     soup = getSoup(link)
     soup = soup.find("table", {"class": "tabcot"})
     rows = soup.findAll("tr")
-    links = []
-    names = []
+    dets = []
     for row in rows:
         onclick = row.find("td", {"class": "tdcotl"})
         if not onclick == None:
+            det = {}
             det = onclick.find("a")
-            link = det['onclick']
+            link = det['onclick'][10:-4]
             name = det.text
-            names.append(name)
-            links.append(link)
-    pprint(names)
+            det['name'] = name
+            det['link'] = link
+            dets.append(det)
+    return dets
 
 def get_type_dets(libcod):
     information = []
@@ -50,9 +51,29 @@ def get_type_dets(libcod):
         for td in tr.findAll("td"):
             date_inf.append(td.text.replace('\xa0', ''))
         information.append(date_inf)
-    pprint(information)
+    return information
 
-def driver:
-    
-
+def get_all_details():
+    details = {}
+    details['data'] = []
+    with open("product_links.json") as f:
+        product_links = json.load(f)['links']
+    for product_link in product_links:
+        product = {}
+        product_name = product_link.replace("https://rnm.franceagrimer.fr/prix?", "")
+        product["name"] = product_name
+        product["types"] = []
+        types = get_product_type(product_link)
+        for t in types:
+            type_detail = []
+            type_detail.append(t['name'])
+            type_detail.append(get_type_dets(t['link']))
+            product["types"].append(type_detail)
+            pprint(type_detail)
+        details['data'].append(product)
+    with open('all_details.json', 'w') as f:
+        json.dump(details,f)
+        
+get_all_details()
+# get_type_dets("5721893")
 # get_product_type("https://rnm.franceagrimer.fr/prix?ABRICOT")
