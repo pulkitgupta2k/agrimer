@@ -69,11 +69,8 @@ def get_all_details():
             type_detail.append(t['name'])
             type_detail.append(get_type_dets(t['link']))
             product["types"].append(type_detail)
-            pprint(type_detail)
+            print(".")
+        pprint(product)
         details['data'].append(product)
     with open('all_details.json', 'w') as f:
         json.dump(details,f)
-        
-get_all_details()
-# get_type_dets("5721893")
-# get_product_type("https://rnm.franceagrimer.fr/prix?ABRICOT")
