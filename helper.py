@@ -3,12 +3,28 @@ from bs4 import BeautifulSoup
 import json
 from pprint import pprint
 from datetime import datetime
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 def getSoup(link):
     req = requests.get(link)
     html = req.content
     soup = BeautifulSoup(html, "html.parser")
     return soup
+
+
+def append_rows(self, values, value_input_option='RAW'):
+    params = {
+            'valueInputOption': value_input_option
+    }
+    body = {
+            'majorDimension': 'ROWS',
+            'values': values
+    }
+    return self.spreadsheet.values_append(self.title, params, body)
+
+
 
 def get_all_products():
     product_links = {}
@@ -125,3 +141,61 @@ def get_all_details():
     with open('all_details.json', 'w') as f:
         json.dump(details,f)
 
+
+def make_matrix():
+    with open("all_details.json") as f:
+        details = json.load(f)
+    with open("dates.json") as f:
+        dates = json.load(f)
+
+    ret_dets = []
+
+
+
+    for product in details['data']:
+        ret_product = {}
+        ret_product['name'] = product['name']
+        heading = []
+        ret_product['rows'] = []
+
+        for d in dates['dates']:
+            heading.append(d)
+        heading.insert(0, 'Product')
+        ret_product['rows'].append(heading)
+
+        for types in product['types']:
+            t = []
+            for d in dates['dates']:
+                t.append('')
+            dates_price = types[1]
+            for date in dates_price:
+                for index, d in enumerate(dates['dates']):
+                    if date[0] == d:
+                        t[index] = date[1]
+                        break
+            t.insert(0, types[0])
+            ret_product['rows'].append(t)
+        ret_dets.append(ret_product)
+    
+
+    return ret_dets
+
+def gsheet_load():
+    scope = [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/drive.file'
+    ]
+    file_name = 'client_key.json'
+    creds = ServiceAccountCredentials.from_json_keyfile_name(file_name,scope)
+    client = gspread.authorize(creds)
+
+    agrimer = client.open('agrimer_')
+    matrixs = make_matrix()
+    for matrix in matrixs:
+        print(matrix['name'])
+        try:
+            worksheet = agrimer.worksheet(matrix['name'])
+        except:
+            worksheet = agrimer.add_worksheet(title= matrix['name'], rows="100", cols="20")
+        worksheet.clear()
+        append_rows(worksheet, matrix['rows'])
