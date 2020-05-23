@@ -188,8 +188,8 @@ def gsheet_load():
     file_name = 'client_key.json'
     creds = ServiceAccountCredentials.from_json_keyfile_name(file_name,scope)
     client = gspread.authorize(creds)
-
-    agrimer = client.open('agrimer_')
+    ctr = 1
+    agrimer = client.open('agrimer_{}'.format(ctr))
     matrixs = make_matrix()
     for matrix in matrixs:
         print(matrix['name'])
@@ -197,5 +197,16 @@ def gsheet_load():
             worksheet = agrimer.worksheet(matrix['name'])
         except:
             worksheet = agrimer.add_worksheet(title= matrix['name'], rows="100", cols="20")
-        worksheet.clear()
-        append_rows(worksheet, matrix['rows'])
+        try:
+            worksheet.clear()
+            append_rows(worksheet, matrix['rows'])
+        except Exception as e:
+            ctr = ctr + 1
+            print("________________Spreadsheet Changed__________________-")
+            agrimer = client.open('agrimer_{}'.format(ctr))
+            try:
+                worksheet = agrimer.worksheet(matrix['name'])
+            except:
+                worksheet = agrimer.add_worksheet(title= matrix['name'], rows="100", cols="20")
+            worksheet.clear()
+            append_rows(worksheet, matrix['rows'])
