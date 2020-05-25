@@ -127,7 +127,7 @@ def get_all_details():
     get_single_details("fruits_o_z.json", "fruits_o_z_details.json")
     get_single_details("legumes_a_c.json", "legumes_a_c_details.json")
     get_single_details("legumes_d_z.json", "legumes_d_z_details.json")
-    get_single_details("peche_aquacuture.json", "peche_aquacuture_details.json")
+    get_single_details("peche_aquaculture.json", "peche_aquaculture_details.json")
     get_single_details("viande.json", "viande_details.json")
     get_single_details("beurre.json", "beurre_details.json")
 
