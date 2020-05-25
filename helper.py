@@ -28,7 +28,6 @@ def append_rows(self, values, value_input_option='RAW'):
 def get_all_products(link, file, start=0, end=9999):
     product_links = {}
     product_links["links"] = []
-    # link = "https://rnm.franceagrimer.fr/prix?FRUITS-ET-LEGUMES"
     soup = getSoup(link)
     products = soup.findAll("div", {"class": "listunproduit"})
     ctr = 0
@@ -99,66 +98,6 @@ def get_type_dets(libcod):
         information.append(date_inf)
     return information
 
-def make_dates_json():
-    dates = {}
-    dates['dates'] = []
-    temp = []
-    temp = temp.extend(dates_separate("fruits_a_n_details.json"))
-    temp = temp.extend(dates_separate("fruits_o_z_details.json"))
-    temp = temp.extend(dates_separate("legumes_a_c_details.json"))
-    temp = temp.extend(dates_separate("legumes_d_z_details.json"))
-    temp = temp.extend(dates_separate("peche_aquacuture_details.json"))
-    temp = temp.extend(dates_separate("viande_details.json"))
-    temp = temp.extend(dates_separate("beurre_details.json"))
-    temp.sort(key=lambda date: datetime.strptime(date, "%d/%m/%y"), reverse=True)
-    dates['dates'] = temp
-    with open('dates.json', 'w') as f:
-        json.dump(dates, f)
-
-def dates_separate(file):
-    temp = []
-    with open(file, 'r') as f:
-        details = json.load(f)
-    for product in details['data']:
-        for types in product['types']:
-            dates_ = types[1]
-            for date in dates_:
-                if date[0] not in temp:
-                    temp.append(date[0])
-    return temp
-
-# def format_data():
-#     with open('all_details copy.json', 'r') as f:
-#         details = json.load(f)
-    
-#     ret_dets = {}
-#     ret_dets['data'] = []
-
-#     for product in details['data']:
-#         ret_product = {}
-#         ret_product['name'] = product['name']
-#         ret_product['types'] = []
-#         for types in product['types']:
-#             t = []
-#             t.append(types[0].strip())
-#             dates_ = types[1]
-#             d = []
-#             for date in dates_:
-#                 dt = []
-#                 dt.append(date[0].strip())
-#                 dt.append(date[1].strip())
-#                 dt.append(date[2].strip())
-#                 dt.append(date[3].strip())
-#                 d.append(dt)
-#             t.append(d)
-#             ret_product['types'].append(t)
-#         # print(ret_product)
-#         ret_dets['data'].append(ret_product)
-    
-    
-#     with open('all_details.json', 'w') as f:
-#         json.dump(ret_dets, f)
-
 def get_single_details(inp_file, out_file):
     details = {}
     details['data'] = []
@@ -179,7 +118,6 @@ def get_single_details(inp_file, out_file):
             type_detail.append(get_type_dets(t['link']))
             product["types"].append(type_detail)
             print(".")
-        pprint(product)
         details['data'].append(product)
     with open(out_file, 'w') as f:
         json.dump(details,f)
@@ -233,7 +171,6 @@ def format_matrix(matrix):
         for temp in heading:
             ret_row.append("")
         for key, value in row.items():
-            # print(heading.index(key))
             ret_row[heading.index(key)] = value
         ret_matrix.append(ret_row)
     return ret_matrix
@@ -259,7 +196,7 @@ def gsheet_load():
     m = format_matrix(prev_matrix)
     agrimer.clear()
     append_rows(agrimer, m)
-
+    print(".")
 
     agrimer = client.open('Fruits O-Z').sheet1
     new_matrix = make_matrix('fruits_o_z_details.json')
@@ -273,6 +210,7 @@ def gsheet_load():
     m = format_matrix(prev_matrix)
     agrimer.clear()
     append_rows(agrimer, m)
+    print(".")
 
     agrimer = client.open('legumes A-C').sheet1
     new_matrix = make_matrix('legumes_a_c_details.json')
@@ -286,6 +224,7 @@ def gsheet_load():
     m = format_matrix(prev_matrix)
     agrimer.clear()
     append_rows(agrimer, m)
+    print(".")
 
     agrimer = client.open('legumes D-Z').sheet1
     new_matrix = make_matrix('legumes_d_z_details.json')
@@ -299,6 +238,7 @@ def gsheet_load():
     m = format_matrix(prev_matrix)
     agrimer.clear()
     append_rows(agrimer, m)
+    print(".")
 
     agrimer = client.open('viande').sheet1
     new_matrix = make_matrix('viande_details.json')
@@ -312,6 +252,7 @@ def gsheet_load():
     m = format_matrix(prev_matrix)
     agrimer.clear()
     append_rows(agrimer, m)
+    print(".")
 
     agrimer = client.open('peache_aquaculture').sheet1
     new_matrix = make_matrix('peche_aquaculture_details.json')
@@ -325,6 +266,7 @@ def gsheet_load():
     m = format_matrix(prev_matrix)
     agrimer.clear()
     append_rows(agrimer, m)
+    print(".")
 
     agrimer = client.open('beurre_oeufs_fromage').sheet1
     new_matrix = make_matrix('beurre_details.json')
@@ -338,10 +280,4 @@ def gsheet_load():
     m = format_matrix(prev_matrix)
     agrimer.clear()
     append_rows(agrimer, m)
-
-
-# get_all_products_driver()
-# get_product_type("https://rnm.franceagrimer.fr/prix?ABRICOT")
-# get_all_details()
-# gsheet_load()
-# make_matrix('fruits_o_z_details.json')
+    print(".")
