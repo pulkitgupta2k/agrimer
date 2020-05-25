@@ -1,6 +1,9 @@
 from helper import *
+import time
 
 if __name__ == "__main__":
-    get_all_details()
-    # make_dates_json()
-    gsheet_load()
+    while True:
+        get_all_details()
+        # make_dates_json()
+        gsheet_load()
+        time.sleep(86400)
