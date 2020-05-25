@@ -6,6 +6,7 @@ from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import re
+import itertools
 
 def getSoup(link):
     req = requests.get(link)
@@ -193,49 +194,49 @@ def get_all_details():
     get_single_details("beurre.json", "beurre_details.json")
 
 
-def make_matrix():
-    with open("all_details.json") as f:
+def make_matrix(file):
+    with open(file) as f:
         details = json.load(f)
-    with open("dates.json") as f:
-        dates = json.load(f)
 
     ret_dets = []
 
-    for product in details['data']:
-        ret_product = {}
-        ret_product['name'] = product['name']
-        heading = []
-        ret_product['rows'] = []
-
-        for d in dates['dates']:
-            heading.append(d)
-        heading.insert(0, 'unite')
-        heading.insert(0, 'libelle')
-        heading.insert(0, 'marche')
-        heading.insert(0, 'stade')
-        heading.insert(0, 'product')
-        ret_product['rows'].append(heading)
-
-        for types in product['types']:
-            t = []
-            for d in dates['dates']:
-                t.append('')
-            dates_price = types[5]
-            for date in dates_price:
-                for index, d in enumerate(dates['dates']):
-                    if date[0] == d:
-                        t[index] = date[1]
-                        break
-            t.insert(0, types[4])
-            t.insert(0, types[3])
-            t.insert(0, types[2])
-            t.insert(0, types[1])
-            t.insert(0, types[0])
-            ret_product['rows'].append(t)
-        ret_dets.append(ret_product)
-    
-
+    for detail in details["data"]:
+        for typee in detail["types"]:
+            product = {}
+            product["product"] = detail["name"]
+            product["stade"] = typee[1]
+            product["marche"] = typee[2]
+            product["libelle"] = typee[0]
+            product["unite"] = typee[3]
+            for date_detail in typee[4]:
+                date_format = datetime.strptime(date_detail[0], "%d/%m/%y")
+                date_format = date_format.strftime("%d%B%y")
+                product[date_format] = date_detail[1]
+            ret_dets.append(product)
     return ret_dets
+
+def format_matrix(matrix):
+    ret_matrix = []
+    heading = ['product', 'stade', 'marche', 'libelle', 'unite']
+    dates = []
+    for row in matrix:
+        ctr = 0
+        for key in row.keys():
+            if key not in dates and ctr>=5:
+                dates.append(key)
+            ctr = ctr + 1
+    dates.sort(key=lambda date: datetime.strptime(date, "%d%B%y"))
+    heading.extend(dates)
+    ret_matrix.append(heading)
+    for row in matrix:
+        ret_row = []
+        for temp in heading:
+            ret_row.append("")
+        for key, value in row.items():
+            # print(heading.index(key))
+            ret_row[heading.index(key)] = value
+        ret_matrix.append(ret_row)
+    return ret_matrix
 
 def gsheet_load():
     scope = [
@@ -245,29 +246,102 @@ def gsheet_load():
     file_name = 'client_key.json'
     creds = ServiceAccountCredentials.from_json_keyfile_name(file_name,scope)
     client = gspread.authorize(creds)
-    ctr = 1
-    agrimer = client.open('agrimer_{}'.format(ctr))
-    matrixs = make_matrix()
-    for matrix in matrixs:
-        print(matrix['name'])
-        try:
-            worksheet = agrimer.worksheet(matrix['name'])
-        except:
-            worksheet = agrimer.add_worksheet(title= matrix['name'], rows="100", cols="20")
-        try:
-            worksheet.clear()
-            append_rows(worksheet, matrix['rows'])
-        except Exception as e:
-            ctr = ctr + 1
-            print("________________Spreadsheet Changed__________________-")
-            agrimer = client.open('agrimer_{}'.format(ctr))
-            try:
-                worksheet = agrimer.worksheet(matrix['name'])
-            except:
-                worksheet = agrimer.add_worksheet(title= matrix['name'], rows="100", cols="20")
-            worksheet.clear()
-            append_rows(worksheet, matrix['rows'])
+
+    agrimer = client.open('Fruits A-N').sheet1
+    new_matrix = make_matrix('fruits_a_n_details.json')
+    prev_matrix = agrimer.get_all_records()
+    for new_row in new_matrix:
+        for prev_row in prev_matrix:
+            if new_row['libelle'].lower() == prev_row['libelle'].lower():
+                for key, value in new_row.items():
+                    if key not in prev_row.keys():
+                        prev_row[key] = value
+    m = format_matrix(prev_matrix)
+    agrimer.clear()
+    append_rows(agrimer, m)
+
+
+    agrimer = client.open('Fruits O-Z').sheet1
+    new_matrix = make_matrix('fruits_o_z_details.json')
+    prev_matrix = agrimer.get_all_records()
+    for new_row in new_matrix:
+        for prev_row in prev_matrix:
+            if new_row['libelle'].lower() == prev_row['libelle'].lower():
+                for key, value in new_row.items():
+                    if key not in prev_row.keys():
+                        prev_row[key] = value
+    m = format_matrix(prev_matrix)
+    agrimer.clear()
+    append_rows(agrimer, m)
+
+    agrimer = client.open('legumes A-C').sheet1
+    new_matrix = make_matrix('legumes_a_c_details.json')
+    prev_matrix = agrimer.get_all_records()
+    for new_row in new_matrix:
+        for prev_row in prev_matrix:
+            if new_row['libelle'].lower() == prev_row['libelle'].lower():
+                for key, value in new_row.items():
+                    if key not in prev_row.keys():
+                        prev_row[key] = value
+    m = format_matrix(prev_matrix)
+    agrimer.clear()
+    append_rows(agrimer, m)
+
+    agrimer = client.open('legumes D-Z').sheet1
+    new_matrix = make_matrix('legumes_d_z_details.json')
+    prev_matrix = agrimer.get_all_records()
+    for new_row in new_matrix:
+        for prev_row in prev_matrix:
+            if new_row['libelle'].lower() == prev_row['libelle'].lower():
+                for key, value in new_row.items():
+                    if key not in prev_row.keys():
+                        prev_row[key] = value
+    m = format_matrix(prev_matrix)
+    agrimer.clear()
+    append_rows(agrimer, m)
+
+    agrimer = client.open('viande').sheet1
+    new_matrix = make_matrix('viande_details.json')
+    prev_matrix = agrimer.get_all_records()
+    for new_row in new_matrix:
+        for prev_row in prev_matrix:
+            if new_row['libelle'].lower() == prev_row['libelle'].lower():
+                for key, value in new_row.items():
+                    if key not in prev_row.keys():
+                        prev_row[key] = value
+    m = format_matrix(prev_matrix)
+    agrimer.clear()
+    append_rows(agrimer, m)
+
+    agrimer = client.open('peache_aquaculture').sheet1
+    new_matrix = make_matrix('peche_aquaculture_details.json')
+    prev_matrix = agrimer.get_all_records()
+    for new_row in new_matrix:
+        for prev_row in prev_matrix:
+            if new_row['libelle'].lower() == prev_row['libelle'].lower():
+                for key, value in new_row.items():
+                    if key not in prev_row.keys():
+                        prev_row[key] = value
+    m = format_matrix(prev_matrix)
+    agrimer.clear()
+    append_rows(agrimer, m)
+
+    agrimer = client.open('beurre_oeufs_fromage').sheet1
+    new_matrix = make_matrix('beurre_details.json')
+    prev_matrix = agrimer.get_all_records()
+    for new_row in new_matrix:
+        for prev_row in prev_matrix:
+            if new_row['libelle'].lower() == prev_row['libelle'].lower():
+                for key, value in new_row.items():
+                    if key not in prev_row.keys():
+                        prev_row[key] = value
+    m = format_matrix(prev_matrix)
+    agrimer.clear()
+    append_rows(agrimer, m)
+
 
 # get_all_products_driver()
 # get_product_type("https://rnm.franceagrimer.fr/prix?ABRICOT")
-get_all_details()
+# get_all_details()
+# gsheet_load()
+# make_matrix('fruits_o_z_details.json')
